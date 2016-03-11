@@ -1,0 +1,48 @@
+{% load rest_framework %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+        <meta name="robots" content="NONE,NOARCHIVE" />
+        <title>Interview Registration</title>
+        <link rel="stylesheet" type="text/css" href="/static/rest_framework/css/bootstrap.min.css"/>
+        <link rel="stylesheet" type="text/css" href="/static/rest_framework/css/bootstrap-tweaks.css"/>
+        <link rel="stylesheet" type="text/css" href="/static/rest_framework/css/prettify.css"/>
+        <link rel="stylesheet" type="text/css" href="/static/rest_framework/css/default.css"/>
+    </head>
+    <body>
+        <div class="wrapper">
+            <div class="navbar navbar-static-top navbar-inverse">
+                <div class="container">
+                    <span>
+                        <a class='navbar-brand' rel="nofollow" > Interview Registration <span class="version">0.0.1</span></a>
+                    </span>
+                    <ul class="nav navbar-nav pull-right">
+                        {% block userlinks %}
+                            {% if user.is_authenticated %}
+                                {% optional_logout request user %}
+                            {% else %}
+                                <li><a href='/login/'>Log in</a></li>
+                            {% endif %}
+                        {% endblock %}
+                    </ul>
+                </div>
+            </div>
+            <div class="container">
+                <ul class="breadcrumb"></ul>
+                <div class="content-main">
+                    <div class="alert alert-success">
+                        <strong><span class="glyphicon glyphicon-ok"></span> Success! {{ message }}</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
+<script src="/static/rest_framework/js/jquery-1.11.3.min.js"></script>
+<script src="/static/rest_framework/js/ajax-form.js"></script>
+<script src="/static/rest_framework/js/csrf.js"></script>
+<script src="/static/rest_framework/js/bootstrap.min.js"></script>
+<script src="/static/rest_framework/js/prettify-min.js"></script>
+<script src="/static/rest_framework/js/default.js"></script>
