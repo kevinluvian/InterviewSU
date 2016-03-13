@@ -18,8 +18,11 @@ class IsInterviewer(permissions.BasePermission):
     """
     Custom permission to check whether this particular user is interviewer
     """
-    def has_object_permission(self, request, view, obj):
-        return not obj.user.interviewer.all()
+    def has_permission(self, request, view):
+        try:
+            return request.user.interviewer
+        except:
+            return False
 
 
 class IsAnonymous(permissions.BasePermission):

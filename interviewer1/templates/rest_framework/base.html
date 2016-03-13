@@ -70,37 +70,6 @@
       <!-- Content -->
       <div id="content">
 
-        {% if 'GET' in allowed_methods %}
-          <form id="get-form" class="pull-right">
-            <fieldset>
-              {% if api_settings.URL_FORMAT_OVERRIDE %}
-                <div class="btn-group format-selection">
-                  <a class="btn btn-primary js-tooltip" href="{{ request.get_full_path }}" rel="nofollow" title="Make a GET request on the {{ name }} resource">GET</a>
-
-                  <button class="btn btn-primary dropdown-toggle js-tooltip" data-toggle="dropdown" title="Specify a format for the GET request">
-                    <span class="caret"></span>
-                  </button>
-                  <ul class="dropdown-menu">
-                    {% for format in available_formats %}
-                      <li>
-                        <a class="js-tooltip format-option" href="{% add_query_param request api_settings.URL_FORMAT_OVERRIDE format %}" rel="nofollow" title="Make a GET request on the {{ name }} resource with the format set to `{{ format }}`">{{ format }}</a>
-                      </li>
-                    {% endfor %}
-                  </ul>
-                </div>
-              {% else %}
-                <a class="btn btn-primary js-tooltip" href="{{ request.get_full_path }}" rel="nofollow" title="Make a GET request on the {{ name }} resource">GET</a>
-              {% endif %}
-            </fieldset>
-          </form>
-        {% endif %}
-
-        {% if options_form %}
-          <form class="button-form" action="{{ request.get_full_path }}" data-method="OPTIONS">
-            <button class="btn btn-primary js-tooltip" title="Make an OPTIONS request on the {{ name }} resource">OPTIONS</button>
-          </form>
-        {% endif %}
-
         {% if delete_form %}
           <button class="btn btn-danger button-form js-tooltip" title="Make a DELETE request on the {{ name }} resource" data-toggle="modal" data-target="#deleteModal">DELETE</button>
 
@@ -144,7 +113,7 @@
                 {% get_pagination_html paginator %}
               </nav>
             {% endif %}
-
+            {% if False %}
             <div class="request-info" style="clear: both" >
               <pre class="prettyprint"><b>{{ request.method }}</b> {{ request.get_full_path }}</pre>
             </div>
@@ -155,6 +124,7 @@
 {% endfor %}
 </span>{{ content|urlize_quoted_links }}</pre>{% endautoescape %}
             </div>
+            {% endif %}
           </div>
 
           {% if display_edit_forms %}
@@ -212,9 +182,6 @@
                     <li>
                       <a name='html-tab' href="#put-object-form" data-toggle="tab">HTML form</a>
                     </li>
-                    <li>
-                      <a  name='raw-tab' href="#put-generic-content-form" data-toggle="tab">Raw data</a>
-                    </li>
                   </ul>
                 {% endif %}
 
@@ -224,31 +191,20 @@
                       <form action="{{ request.get_full_path }}" data-method="PUT" enctype="multipart/form-data" class="form-horizontal" novalidate>
                         <fieldset>
                           {{ put_form }}
-                          <div class="form-actions">
-                            <button class="btn btn-primary js-tooltip" title="Make a PUT request on the {{ name }} resource">PUT</button>
-                          </div>
+
+                            <form>
+                            <button style="float: right;" class="btn btn-primary js-tooltip">Finish Interview</button>
+                            </form>
+                            <form class="button-form" action="../cancel/">
+                            <button style="float:right;" type="submit" class="btn btn-primary js-tooltip">Put Back to Queue</button>
+                           </form>
+
+
+
                         </fieldset>
                       </form>
                     </div>
                   {% endif %}
-
-                  <div {% if put_form %}class="tab-pane"{% endif %} id="put-generic-content-form">
-                    {% with form=raw_data_put_or_patch_form %}
-                      <form action="{{ request.get_full_path }}" data-method="PUT" class="form-horizontal">
-                        <fieldset>
-                          {% include "rest_framework/raw_data_form.html" %}
-                          <div class="form-actions">
-                            {% if raw_data_put_form %}
-                              <button class="btn btn-primary js-tooltip" title="Make a PUT request on the {{ name }} resource">PUT</button>
-                            {% endif %}
-                            {% if raw_data_patch_form %}
-                            <button data-method="PATCH" class="btn btn-primary js-tooltip" title="Make a PATCH request on the {{ name }} resource">PATCH</button>
-                              {% endif %}
-                          </div>
-                        </fieldset>
-                      </form>
-                    {% endwith %}
-                  </div>
                 </div>
               </div>
             {% endif %}

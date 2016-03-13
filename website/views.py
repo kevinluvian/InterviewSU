@@ -2,15 +2,20 @@ from django.shortcuts import render
 from rest_framework import viewsets,mixins
 from rest_framework import generics
 from django.contrib.auth import *
-from user.models import Interviewee
-from user.serializer import InterviewRegistrationSerializer, IntervieweeRegistrationSerializer
+from user.models import Interviewee, InterviewRegister
+from user.serializer import InterviewRegistrationSerializer, IntervieweeRegistrationSerializer, InterviewAdminSerializer, InterviewCallSerializer, InterviewMainSerializer
 from django.contrib.auth.models import User
 from user.permissions import *
-from rest_framework.decorators import api_view
+from rest_framework.views import APIView
+from rest_framework.decorators import api_view, detail_route, renderer_classes
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from rest_framework import status
-from rest_framework.renderers import TemplateHTMLRenderer,AdminRenderer
+from rest_framework.renderers import AdminRenderer,BrowsableAPIRenderer, JSONRenderer, HTMLFormRenderer
+from django.utils import timezone
+from rest_framework.negotiation import BaseContentNegotiation
+from django.http import HttpResponseRedirect
+from django.shortcuts import redirect
 
 
 class RegisterViewSet(mixins.CreateModelMixin, generics.GenericAPIView):
@@ -33,19 +38,32 @@ class RegisterViewSet(mixins.CreateModelMixin, generics.GenericAPIView):
         return render(request, 'success.html', {'message': 'Registration successful'})
 
 
-class IntervieweeProfileViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, viewsets.GenericViewSet):
-    """
-    This viewset is for viewing the profile, and update the data inside it
-    """
-    queryset = Interviewee.objects.all()
+@api_view(['GET', 'POST'])
+def hello_world(request):
+    if request.method == 'POST':
+        return Response({"message": "Got some data!", "data": request.data})
+    return Response({"message": "Hello, world!"})
+
+
+class InterviewAdminView(APIView):
+    @api_view()
+    @renderer_classes(AdminRenderer)
+    def get(self, request, format=None):
+        return Response({'hello': 'hello'})
+
+class InterviewAdminJudgeViewSet(mixins.ListModelMixin, mixins.UpdateModelMixin, viewsets.GenericViewSet):
+    queryset = InterviewRegister.objects.filter(status=3)
+    serializer_class = InterviewAdminSerializer
+    renderer_classes = [AdminRenderer,]
+    permission_classes = (IsInterviewer,)
+
+class InterviewRegisterViewSet(mixins.ListModelMixin, mixins.CreateModelMixin, viewsets.GenericViewSet):
+    queryset = InterviewRegister.objects.all()
     serializer_class = InterviewRegistrationSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly, IsIntervieweeHimself,)
-
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+    permission_classes = (permissions.IsAuthenticated, )
 
 
-class UserViewSet(mixins.ListModelMixin, mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin, viewsets.GenericViewSet):
+class IntervieweeViewSet(mixins.ListModelMixin, mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin, viewsets.GenericViewSet):
     """
     This viewset automatically provides `list` and `detail` actions.
     """

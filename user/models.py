@@ -7,6 +7,9 @@ class InterviewGroup(models.Model):
     maxRegister = models.IntegerField()
     closeSelection = models.IntegerField()
 
+    def __str__(self):
+        return self.name
+
 
 class InterviewDepartment(models.Model):
     name = models.CharField(max_length=50)
@@ -18,6 +21,9 @@ class InterviewDepartment(models.Model):
     # failMessage = models.TextField(max_length=2000, blank=True)
     # successMessage = models.TextField(max_length=2000, blank=True)
 
+    def __str__(self):
+        return self.name
+
 
 class Interviewee(models.Model):
     user = models.OneToOneField(User, related_name="interviewee")
@@ -26,6 +32,9 @@ class Interviewee(models.Model):
     year = models.IntegerField()
     major = models.CharField(max_length=50)
     phone = models.CharField(max_length=50)
+
+    def __str__(self):
+        return self.name
 
 
 class InterviewRegister(models.Model):
@@ -42,11 +51,11 @@ class InterviewRegister(models.Model):
 
 
 class Interviewer(models.Model):
+    user = models.OneToOneField(User, related_name="interviewer")
     department = models.ForeignKey(InterviewDepartment, related_name="interviewer")
     code = models.CharField(max_length=50)
     status = models.IntegerField(default=0)
-    statusDesc = models.CharField(max_length=50, blank=True)
-    user = models.ForeignKey(User, related_name="interviewer")
+    statusDesc = models.IntegerField(default=-1)
     lastAction = models.DateTimeField(auto_now=True)
 
 
