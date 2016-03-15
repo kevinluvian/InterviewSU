@@ -1,0 +1,63 @@
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+
+<script>
+	var time = new Date().getTime();
+
+	function refresh() {
+	    console.log("refresh!")
+	    $.ajax({
+	        url : "request/SU",
+	        type : "GET",
+	        data : {},
+
+	        success : function(json) {
+	            $('#post-text').val('');
+	        //  console.log(json);
+	        //  console.log("success");
+	          console.log(json['data']);
+	            $('.tablequeue').empty();
+
+	            for(var i = 0; i < json['data'].length; i++) {
+	            	var kata =  "";
+	            	kata = kata + '<tr align = \"center\" >';
+                    for (var j = 0; j < json['data'][i].length; j++) {
+                        if (j == 0) {
+                            kata = kata + '<td style = \"width:10%\">';
+                            kata = kata + json['data'][i][j];
+                        }else {
+                            kata = kata + '<td style = \"width:9%\" bgcolor = \"';
+                            if (json['data'][i][j][1] == 0) {
+                                kata = kata + 'white';
+                            }else if (json['data'][i][j][1] == 1) {
+                                kata = kata + 'yellow';
+                            }else {
+                                kata = kata + 'cyan';
+                            }
+                            kata = kata + '\">';
+                            kata = kata + json['data'][i][j][0];
+                        }
+                        kata = kata + '</td>';
+                    }
+                    for (var j = 0; j < 11-json['data'][i].length; j++) {
+                        kata = kata + '<td style = \"width:9%\"></td>';
+                    }
+                    $('.tablequeue').append(kata);
+				}
+	        },
+	    });
+		setTimeout(refresh, 2000);
+	};
+	setTimeout(refresh, 0);
+</script>
+
+<table style="width:100%" border = "1">
+<tr align = "center" >
+	<td colspan = 2 >Interview Group</td>
+</tr>
+<tr align = "center" >
+	<td style = "width:10%">DEPT</td>
+	<td style = "width:90%">Next 10 Queue</td>
+</tr>
+</table>
+<table style = "width:100%" border = "1" class = "tablequeue">
+</table>

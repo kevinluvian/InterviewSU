@@ -1,14 +1,37 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Interviewee, InterviewRegister, InterviewDepartment
-from rest_framework.exceptions import ValidationError
+from .models import Interviewee, InterviewRegister, InterviewDepartment, InterviewGroup
+
+
+class InterviewGroupSerializer(serializers.ModelSerializer):
+    url = serializers.CharField(source='name')
+
+    class Meta:
+        model = InterviewGroup
+        fields = ('id', 'name', 'url')
 
 
 class InterviewRegistrationSerializer(serializers.ModelSerializer):
-    queueNumber = serializers.IntegerField(read_only=True)
+    queueNumber = serializers.SerializerMethodField('cari_queue')
+    group = serializers.CharField(source='department.group.name',read_only=True)
+    url = serializers.CharField(source='pk',read_only=True)
+
     class Meta:
         model = InterviewRegister
-        fields = ('id', 'department', 'queueNumber')
+        fields = ('id', 'group', 'department', 'queueNumber', 'url')
+
+    def cari_queue(self, obj):
+        cnt = 0
+        for q in InterviewRegister.objects.filter(department=obj.department, status=0).order_by('queueNumber'):
+            if q.interviewee.pk == obj.interviewee.pk:
+                return 'There are ' + str(cnt) + ' people in front of you'
+            else:
+                cnt += 1
+        return 'There are ' + str(cnt) + ' people in front of you'
+
+    def __init__(self, *args, **kwargs):
+        super(InterviewRegistrationSerializer, self).__init__(*args, **kwargs)
+        self.fields['department'].queryset = InterviewDepartment.objects.exclude(group__closeSelection=1)
 
     def validate_department(self, value):
         q = self.context['request'].user
@@ -16,14 +39,15 @@ class InterviewRegistrationSerializer(serializers.ModelSerializer):
         try:
             q.interviewee.interviewRegister.get(department=value)
         except InterviewRegister.DoesNotExist:
+            if len(q.interviewee.interviewRegister.filter(department__group=dept.group, status = 0)) == 1:
+                raise serializers.ValidationError('only 1 queue is allowed at a time')
             if len(q.interviewee.interviewRegister.filter(department__group=dept.group)) < dept.group.maxRegister:
                 return value
             else:
-                raise serializers.ValidationError('you reached the maximum department registration allowed for this Interview Group')
-        raise serializers.ValidationError('registered to this already')
+                raise serializers.ValidationError('you exceeded the number of maximum registration allowed')
+        raise serializers.ValidationError('you already registered to this department before')
 
     def create(self, validated_data):
-        print(validated_data)
         q = self.context['request'].user
         validated_data['interviewee'] = q.interviewee
         validated_data['queueNumber'] = validated_data['department'].queueLast + 1
@@ -31,6 +55,30 @@ class InterviewRegistrationSerializer(serializers.ModelSerializer):
         validated_data['department'].queueLast += 1
         validated_data['department'].save()
         return super(InterviewRegistrationSerializer, self).create(validated_data)
+
+
+class InterviewRegistrationSerializer2(serializers.ModelSerializer):
+    queueNumber = serializers.SerializerMethodField('cari_queue')
+    # registerLeft = serializers.SerializerMethodField('checkLeft')
+    department = serializers.CharField(source='department.name')
+    group = serializers.CharField(source='department.group.name',read_only=True)
+    url = serializers.CharField(source='pk',read_only=True)
+
+    def checkLeft(self, obj):
+        return '{0}/{1}'.format(str(obj.department.group.maxRegister - len(obj.interviewee.interviewRegister.all())), str(obj.department.group.maxRegister))
+
+    class Meta:
+        model = InterviewRegister
+        fields = ('id', 'group', 'department', 'queueNumber', 'url')
+
+    def cari_queue(self, obj):
+        cnt = 0
+        for q in InterviewRegister.objects.filter(department=obj.department, status=0).order_by('queueNumber'):
+            if q.interviewee.pk == obj.interviewee.pk:
+                return 'There are ' + str(cnt) + ' people in front of you'
+            else:
+                cnt += 1
+        return 'There are ' + str(cnt) + ' people in front of you'
 
 
 class InterviewMainSerializer(serializers.ModelSerializer):
@@ -51,117 +99,136 @@ class InterviewCallSerializer(serializers.ModelSerializer):
         fields = ('id', 'queue_number', 'matric', 'name', 'status')
 
 
-class InterviewAdminSerializer(serializers.ModelSerializer):
+class InterviewResultSerializer(serializers.ModelSerializer):
+    matric = serializers.CharField(source='matricNumber')
+    accepted = serializers.SerializerMethodField('generateaccepted')
+
+    def generateaccepted(self, obj):
+        ret = []
+        for q in obj.interviewRegister.filter(resultPending=1).order_by('department'):
+            ret.append(q)
+        return ret
+
+    class Meta:
+        model = Interviewee
+        fields = ('id', 'name', 'matric', 'accepted')
+
+
+class InterviewJudgeSerializer(serializers.ModelSerializer):
     url = serializers.CharField(source='id')
     queue = serializers.CharField(source='queueNumber')
+    matric = serializers.CharField(source='interviewee.matricNumber')
+    name = serializers.CharField(source='interviewee.name')
+    result = serializers.SerializerMethodField()
+
+    def get_result(self, obj):
+        if obj.resultPending == 0:
+            return 'Pending'
+        else:
+            return 'Accept'
+
+    class Meta:
+        model = InterviewRegister
+        fields = ('id', 'queue', 'matric', 'name', 'status', 'customAnswer', 'comment', 'score', 'result', 'url')
+
+
+class InterviewHomeSerializer(serializers.ModelSerializer):
+    queue = serializers.SerializerMethodField('cari_queue')
+    department = serializers.CharField(source='department.name')
+    group = serializers.CharField(source='department.group')
+    def cari_queue(self, obj):
+        cnt = 0
+        for q in InterviewRegister.objects.filter(department=obj.department, status=0).order_by('queueNumber'):
+            if q.interviewee.pk == obj.interviewee.pk:
+                return 'There are ' + str(cnt) + ' people in front of you'
+            else:
+                cnt += 1
+        return 'There are ' + str(cnt) + ' people in front of you'
+
+    class Meta:
+        model = InterviewRegister
+        fields = ('group', 'department', 'queue')
+
+
+class InterviewAdminSerializer(serializers.ModelSerializer):
+    url = serializers.CharField(source='id')
     matric = serializers.CharField(source='interviewee.matricNumber')
     name = serializers.CharField(source='interviewee.name')
 
     class Meta:
         model = InterviewRegister
-        fields = ('id', 'queue', 'matric', 'name', 'status', 'customAnswer', 'comment', 'score', 'url')
+        fields = ('id', 'matric', 'name', 'url')
 
-    def is_valid(self, raise_exception=False):
-
-        assert not hasattr(self, 'restore_object'), (
-            'Serializer `%s.%s` has old-style version 2 `.restore_object()` '
-            'that is no longer compatible with REST framework 3. '
-            'Use the new-style `.create()` and `.update()` methods instead.' %
-            (self.__class__.__module__, self.__class__.__name__)
-        )
-
-        assert hasattr(self, 'initial_data'), (
-            'Cannot call `.is_valid()` as no `data=` keyword argument was '
-            'passed when instantiating the serializer instance.'
-        )
-
-        if not hasattr(self, '_validated_data'):
-            try:
-                self._validated_data = self.run_validation(self.initial_data)
-            except ValidationError as exc:
-                self._validated_data = {}
-                self._errors = exc.detail
-            else:
-                self._errors = {}
-
-        if self._errors and raise_exception:
-            raise ValidationError(self.errors)
-
-        return not bool(self._errors)
-
-    def save(self, **kwargs):
-        assert not hasattr(self, 'save_object'), (
-            'Serializer `%s.%s` has old-style version 2 `.save_object()` '
-            'that is no longer compatible with REST framework 3. '
-            'Use the new-style `.create()` and `.update()` methods instead.' %
-            (self.__class__.__module__, self.__class__.__name__)
-        )
-
-        assert hasattr(self, '_errors'), (
-            'You must call `.is_valid()` before calling `.save()`.'
-        )
-
-        assert not self.errors, (
-            'You cannot call `.save()` on a serializer with invalid data.'
-        )
-
-        # Guard against incorrect use of `serializer.save(commit=False)`
-        assert 'commit' not in kwargs, (
-            "'commit' is not a valid keyword argument to the 'save()' method. "
-            "If you need to access data before committing to the database then "
-            "inspect 'serializer.validated_data' instead. "
-            "You can also pass additional keyword arguments to 'save()' if you "
-            "need to set extra attributes on the saved model instance. "
-            "For example: 'serializer.save(owner=request.user)'.'"
-        )
-
-        assert not hasattr(self, '_data'), (
-            "You cannot call `.save()` after accessing `serializer.data`."
-            "If you need to access data before committing to the database then "
-            "inspect 'serializer.validated_data' instead. "
-        )
-
-        validated_data = dict(
-            list(self.validated_data.items()) +
-            list(kwargs.items())
-        )
-
-        if self.instance is not None:
-            self.instance = self.update(self.instance, validated_data)
-            assert self.instance is not None, (
-                '`update()` did not return an object instance.'
-            )
-        else:
-            self.instance = self.create(validated_data)
-            assert self.instance is not None, (
-                '`create()` did not return an object instance.'
-            )
-
-        return self.instance
 
 class IntervieweeRegistrationSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username')
-    password = serializers.CharField(source='user.password', write_only=True)
+    password = serializers.CharField(source='user.password', write_only=True, allow_blank=True, style = {'placeholder' : 'Password1',
+                 'input_type': 'password'},)
 
     class Meta:
         model = Interviewee
         fields = ('id', 'username', 'password', 'name', 'matricNumber', 'year', 'major', 'phone')
 
+    def is_valid(self, raise_exception=False):
+        error = super(IntervieweeRegistrationSerializer, self).is_valid(raise_exception = raise_exception)
+        try:
+            User.objects.get(username=self.initial_data['username'])
+            if not 'username' in self._errors:
+                self._errors['username'] = ['This email is already registered']
+            return False
+        except :
+            try:
+                Interviewee.objects.get(matricNumber=self.initial_data['matricNumber'])
+                if not 'matricNumber' in self._errors:
+                    self._errors['matricNumber'] = ['This matric number is already registered']
+            except:
+                return error
+        return False
+
     def update(self, instance, validated_data):
-        print(instance)
         if instance is not None:
             q = validated_data.pop('user', None)
             q.pop('username', None)
         interviewee = super(IntervieweeRegistrationSerializer, self).update(instance, validated_data)
-        if 'password' in q:
+        if 'password' in q and q['password']:
             interviewee.user.set_password(q['password'])
             interviewee.user.save()
         return interviewee
 
     def create(self, validated_data):
         info = validated_data.pop('user')
-        print(info)
-        user = User.objects.create_user(username=info.get('username'), password=info.get('password'))
+        try:
+            user = User.objects.create_user(username=info.get('username'), password=info.get('password'))
+        except:
+            raise serializers.ValidationError('user already exists')
         validated_data['user'] = user
         return super(IntervieweeRegistrationSerializer, self).create(validated_data)
+
+
+class IntervieweeRegistrationUpdateSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(source='user.password', write_only=True, allow_blank=True, style = {'placeholder' : 'Password1',
+                 'input_type': 'password'},)
+
+    class Meta:
+        model = Interviewee
+        fields = ('id', 'password', 'name', 'matricNumber', 'year', 'major', 'phone')
+
+    def update(self, instance, validated_data):
+        if instance is not None:
+            q = validated_data.pop('user', None)
+            q.pop('username', None)
+        interviewee = super(IntervieweeRegistrationUpdateSerializer, self).update(instance, validated_data)
+        if 'password' in q and q['password']:
+            interviewee.user.set_password(q['password'])
+            interviewee.user.save()
+        return interviewee
+
+    def create(self, validated_data):
+        info = validated_data.pop('user')
+        try:
+            user = User.objects.create_user(username=info.get('username'), password=info.get('password'))
+        except:
+            raise serializers.ValidationError('user already exists')
+        validated_data['user'] = user
+        return super(IntervieweeRegistrationUpdateSerializer, self).create(validated_data)
 

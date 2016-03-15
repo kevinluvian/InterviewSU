@@ -32,14 +32,22 @@ class Interviewee(models.Model):
     year = models.IntegerField()
     major = models.CharField(max_length=50)
     phone = models.CharField(max_length=50)
+    countAccepted = models.IntegerField(default=0)
 
     def __str__(self):
         return self.name
 
+    def hitung(self):
+        cnt = 0
+        for q in self.interviewRegister.all():
+            if q.resultPending == 1:
+                cnt += 1
+        return cnt
+
 
 class InterviewRegister(models.Model):
     interviewee = models.ForeignKey(Interviewee, related_name="interviewRegister")
-    department = models.ForeignKey(InterviewDepartment, related_name="interviewee")
+    department = models.ForeignKey(InterviewDepartment, related_name="interviewRegister")
     queueNumber = models.IntegerField()
     status = models.IntegerField()
     customAnswer = models.TextField(blank=True)
@@ -48,6 +56,9 @@ class InterviewRegister(models.Model):
     lastAction = models.DateTimeField(auto_now=True)
     resultPending = models.IntegerField(default=0)
     resultFinal = models.IntegerField(default=0)
+
+    def __str__(self):
+        return self.department.name
 
 
 class Interviewer(models.Model):
@@ -60,4 +71,5 @@ class Interviewer(models.Model):
 
 
 class Boss(models.Model):
+    user = models.ForeignKey(User, related_name="boss")
     group = models.ForeignKey(InterviewGroup, related_name="boss")

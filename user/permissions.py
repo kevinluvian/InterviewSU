@@ -6,12 +6,6 @@ class IsIntervieweeHimself(permissions.BasePermission):
     """
 
     def has_object_permission(self, request, view, obj):
-        # Read permissions are allowed to any request,
-        # so we'll always allow GET, HEAD or OPTIONS requests.
-        # komentarin 2 baris ini buat edit profile user
-        # if request.method in permissions.SAFE_METHODS:
-        #   return True
-        # Write permissions are only allowed to the owner of the snippet.
         return obj.user == request.user
 
 class IsInterviewer(permissions.BasePermission):
@@ -21,6 +15,16 @@ class IsInterviewer(permissions.BasePermission):
     def has_permission(self, request, view):
         try:
             return request.user.interviewer
+        except:
+            return False
+
+class IsInterviewee(permissions.BasePermission):
+    """
+    Custom permission to check whether this particular user is interviewer
+    """
+    def has_permission(self, request, view):
+        try:
+            return request.user.interviewee
         except:
             return False
 
