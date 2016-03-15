@@ -48,6 +48,7 @@ class InterviewResultSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     queryset = Interviewee.objects.all().order_by('-countAccepted')
     serializer_class = InterviewResultSerializer
     renderer_classes = [AdminResultRenderer,]
+    permission_classes = (IsBoss,)
 
 
 class InterviewAdminViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin, viewsets.GenericViewSet):

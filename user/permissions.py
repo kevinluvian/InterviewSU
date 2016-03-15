@@ -29,6 +29,17 @@ class IsInterviewee(permissions.BasePermission):
             return False
 
 
+class IsBoss(permissions.BasePermission):
+    """
+    Custom permission to check whether this particular user is interviewer
+    """
+    def has_permission(self, request, view):
+        try:
+            return request.user.boss
+        except:
+            return False
+
+
 class IsAnonymous(permissions.BasePermission):
     """
     Allows access only to authenticated users.
