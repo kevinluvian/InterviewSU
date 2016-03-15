@@ -71,5 +71,5 @@ class Interviewer(models.Model):
 
 
 class Boss(models.Model):
-    user = models.ForeignKey(User, related_name="boss")
+    user = models.OneToOneField(User, related_name="boss")
     group = models.ForeignKey(InterviewGroup, related_name="boss")
