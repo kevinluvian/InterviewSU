@@ -13,8 +13,8 @@ class InterviewGroupSerializer(serializers.ModelSerializer):
 
 class InterviewRegistrationSerializer(serializers.ModelSerializer):
     queueNumber = serializers.SerializerMethodField('cari_queue')
-    group = serializers.CharField(source='department.group.name',read_only=True)
-    url = serializers.CharField(source='pk',read_only=True)
+    group = serializers.CharField(source='department.group.name', read_only=True)
+    url = serializers.CharField(source='pk', read_only=True)
 
     class Meta:
         model = InterviewRegister
@@ -162,8 +162,7 @@ class InterviewAdminSerializer(serializers.ModelSerializer):
 
 class IntervieweeRegistrationSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username')
-    password = serializers.CharField(source='user.password', write_only=True, allow_blank=True, style = {'placeholder' : 'Password1',
-                 'input_type': 'password'},)
+    password = serializers.CharField(source='user.password', write_only=True, allow_blank=True, style={'placeholder': 'Password1', 'input_type': 'password'},)
 
     class Meta:
         model = Interviewee
@@ -173,19 +172,20 @@ class IntervieweeRegistrationSerializer(serializers.ModelSerializer):
         error = super(IntervieweeRegistrationSerializer, self).is_valid(raise_exception = raise_exception)
         try:
             User.objects.get(username=self.initial_data['username'])
-            if not 'username' in self._errors:
+            if not ('username' in self._errors):
                 self._errors['username'] = ['This email is already registered']
             return False
-        except :
+        except:
             try:
                 Interviewee.objects.get(matricNumber=self.initial_data['matricNumber'])
-                if not 'matricNumber' in self._errors:
+                if not ('matricNumber' in self._errors):
                     self._errors['matricNumber'] = ['This matric number is already registered']
             except:
                 return error
         return False
 
     def update(self, instance, validated_data):
+        global q
         if instance is not None:
             q = validated_data.pop('user', None)
             q.pop('username', None)
@@ -206,19 +206,19 @@ class IntervieweeRegistrationSerializer(serializers.ModelSerializer):
 
 
 class IntervieweeRegistrationUpdateSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(source='user.password', write_only=True, allow_blank=True, style = {'placeholder' : 'Password1',
-                 'input_type': 'password'},)
+    password = serializers.CharField(source='user.password', write_only=True, allow_blank=True, style={'placeholder': 'Password1', 'input_type': 'password'},)
 
     class Meta:
         model = Interviewee
         fields = ('id', 'password', 'name', 'matricNumber', 'year', 'major', 'phone')
 
     def update(self, instance, validated_data):
+        global q
         if instance is not None:
             q = validated_data.pop('user', None)
             q.pop('username', None)
         interviewee = super(IntervieweeRegistrationUpdateSerializer, self).update(instance, validated_data)
-        if 'password' in q and q['password']:
+        if ('password' in q) and q['password']:
             interviewee.user.set_password(q['password'])
             interviewee.user.save()
         return interviewee
