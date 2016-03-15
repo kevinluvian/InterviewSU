@@ -61,8 +61,8 @@ class InterviewRegistrationSerializer2(serializers.ModelSerializer):
     queueNumber = serializers.SerializerMethodField('cari_queue')
     # registerLeft = serializers.SerializerMethodField('checkLeft')
     department = serializers.CharField(source='department.name')
-    group = serializers.CharField(source='department.group.name',read_only=True)
-    url = serializers.CharField(source='pk',read_only=True)
+    group = serializers.CharField(source='department.group.name', read_only=True)
+    url = serializers.CharField(source='pk', read_only=True)
 
     def checkLeft(self, obj):
         return '{0}/{1}'.format(str(obj.department.group.maxRegister - len(obj.interviewee.interviewRegister.all())), str(obj.department.group.maxRegister))
