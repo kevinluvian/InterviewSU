@@ -1,32 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="2b5ad856-7b0f-47cd-9422-88da5b842e88" name="Default" comment="small changes">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/interview/auth.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/db.sqlite3" afterPath="$PROJECT_DIR$/db.sqlite3" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/interview.iml" afterPath="$PROJECT_DIR$/.idea/interview.iml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/misc.xml" afterPath="$PROJECT_DIR$/.idea/misc.xml" />
+    <list default="true" id="2b5ad856-7b0f-47cd-9422-88da5b842e88" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/interview/settings.py" afterPath="$PROJECT_DIR$/interview/settings.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/user/models.py" afterPath="$PROJECT_DIR$/user/models.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/user/serializer.py" afterPath="$PROJECT_DIR$/user/serializer.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/website/templates/rest_framework/admin/detail_interviewer.html" afterPath="$PROJECT_DIR$/website/templates/rest_framework/admin/detail_interviewer.html" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/website/templates/rest_framework/admin/detail_judge.html" afterPath="$PROJECT_DIR$/website/templates/rest_framework/admin/detail_judge.html" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/website/templates/rest_framework/admin/list_home.html" afterPath="$PROJECT_DIR$/website/templates/rest_framework/admin/list_home.html" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/website/templates/rest_framework/admin/list_interview_register.html" afterPath="$PROJECT_DIR$/website/templates/rest_framework/admin/list_interview_register.html" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/website/templates/rest_framework/admin/list_interviewer.html" afterPath="$PROJECT_DIR$/website/templates/rest_framework/admin/list_interviewer.html" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/website/templates/rest_framework/admin/list_judge.html" afterPath="$PROJECT_DIR$/website/templates/rest_framework/admin/list_judge.html" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/website/templates/rest_framework/admin/list_result.html" afterPath="$PROJECT_DIR$/website/templates/rest_framework/admin/list_result.html" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/website/templates/rest_framework/admin_home.html" afterPath="$PROJECT_DIR$/website/templates/rest_framework/admin_home.html" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/website/templates/rest_framework/admin_interviewer.html" afterPath="$PROJECT_DIR$/website/templates/rest_framework/admin_interviewer.html" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/website/templates/rest_framework/admin_judge.html" afterPath="$PROJECT_DIR$/website/templates/rest_framework/admin_judge.html" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/website/templates/rest_framework/admin_result.html" afterPath="$PROJECT_DIR$/website/templates/rest_framework/admin_result.html" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/website/templates/rest_framework/api_register.html" afterPath="$PROJECT_DIR$/website/templates/rest_framework/api_register.html" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/website/templates/rest_framework/base_interview_register.html" afterPath="$PROJECT_DIR$/website/templates/rest_framework/base_interview_register.html" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/website/templates/rest_framework/base_interviewer.html" afterPath="$PROJECT_DIR$/website/templates/rest_framework/base_interviewer.html" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/website/templates/rest_framework/base_register.html" afterPath="$PROJECT_DIR$/website/templates/rest_framework/base_register.html" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/website/templates/rest_framework/board.html" afterPath="$PROJECT_DIR$/website/templates/rest_framework/board.html" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/website/views.py" afterPath="$PROJECT_DIR$/website/views.py" />
     </list>
     <ignored path="interview.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -652,7 +628,14 @@
       <option name="project" value="LOCAL" />
       <updated>1459929507127</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL-00009" summary="small changes">
+      <created>1525905825031</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1525905825031</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="ToolWindowManager">
@@ -1076,6 +1059,7 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="75">
           <caret line="6" column="6" lean-forward="false" selection-start-line="6" selection-start-column="6" selection-end-line="6" selection-end-column="6" />
+          <folding />
         </state>
       </provider>
     </entry>
