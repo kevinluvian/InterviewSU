@@ -13,7 +13,7 @@ class InterviewGroup(models.Model):
 
 class InterviewDepartment(models.Model):
     name = models.CharField(max_length=50)
-    code = models.CharField(max_length=50)
+    # code = models.CharField(max_length=50)
     group = models.ForeignKey(InterviewGroup, related_name="department")
     queueNow = models.IntegerField(default=0)
     queueLast = models.IntegerField(default=0)
@@ -49,6 +49,7 @@ class InterviewRegister(models.Model):
     interviewee = models.ForeignKey(Interviewee, related_name="interviewRegister")
     department = models.ForeignKey(InterviewDepartment, related_name="interviewRegister")
     queueNumber = models.IntegerField()
+    # TODO: remove magic number
     status = models.IntegerField()
     customAnswer = models.TextField(blank=True)
     comment = models.TextField(blank=True)
@@ -64,7 +65,8 @@ class InterviewRegister(models.Model):
 class Interviewer(models.Model):
     user = models.OneToOneField(User, related_name="interviewer")
     department = models.ForeignKey(InterviewDepartment, related_name="interviewer")
-    code = models.CharField(max_length=50)
+    # code = models.CharField(max_length=50)
+    # TODO: remove magic number
     status = models.IntegerField(default=0)
     statusDesc = models.IntegerField(default=-1)
     lastAction = models.DateTimeField(auto_now=True)

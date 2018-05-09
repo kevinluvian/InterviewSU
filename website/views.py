@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from rest_framework import viewsets,mixins
+from rest_framework import viewsets, mixins
 from user.serializer import *
 from user.permissions import *
 from django.http import JsonResponse
@@ -10,32 +10,35 @@ from .customrenderers import *
 from django.http import HttpResponseRedirect
 
 
+# TODO: remove all magic number
+
 def requestdata(request, group):
     arr = []
     for q in InterviewDepartment.objects.filter(group__name=group):
         arr.append([])
         arr[-1].append(q.name)
         for w in q.interviewRegister.exclude(status=3).order_by('queueNumber'):
-            arr[-1].append([w.interviewee.matricNumber, w.status])
-    return JsonResponse({'data' : arr})
+            arr[-1].append([w.interviewee.name, w.status])
+    return JsonResponse({'data': arr})
 
 
 def queueboard(request, group):
-    return render(request, 'rest_framework/board.html')
+    return render(request, 'rest_framework/board.html', {'group': group})
 
 
-@renderer_classes([AdminResultRenderer,])
-class InterviewGroupChooseSet(mixins.ListModelMixin, mixins.CreateModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+@renderer_classes([AdminResultRenderer, ])
+class InterviewGroupChooseSet(mixins.ListModelMixin, mixins.CreateModelMixin, mixins.RetrieveModelMixin,
+                              viewsets.GenericViewSet):
     queryset = InterviewGroup.objects.all()
     serializer_class = InterviewGroupSerializer
 
     def retrieve(self, request, *args, **kwargs):
-        return HttpResponseRedirect('../../queueboard/'+kwargs['pk'])
+        return HttpResponseRedirect('../../queueboard/' + kwargs['pk'])
 
 
 class Home(viewsets.GenericViewSet, mixins.ListModelMixin):
     serializer_class = InterviewHomeSerializer
-    renderer_classes = [AdminHomeRenderer,]
+    renderer_classes = [AdminHomeRenderer, ]
 
     def get_queryset(self):
         try:
@@ -47,11 +50,12 @@ class Home(viewsets.GenericViewSet, mixins.ListModelMixin):
 class InterviewResultSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     queryset = Interviewee.objects.all().order_by('-countAccepted')
     serializer_class = InterviewResultSerializer
-    renderer_classes = [AdminResultRenderer,]
+    renderer_classes = [AdminResultRenderer, ]
     permission_classes = (IsBoss,)
 
 
-class InterviewAdminViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin, viewsets.GenericViewSet):
+class InterviewAdminViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin,
+                            viewsets.GenericViewSet):
     queryset = InterviewRegister.objects.filter(status=0).order_by('queueNumber')
     serializer_class = InterviewAdminSerializer
     renderer_classes = [AdminInterviewerRenderer, ]
@@ -68,7 +72,8 @@ class InterviewAdminViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mi
     @detail_route()
     def startinterview(self, request, pk):
         instance = InterviewRegister.objects.get(pk=pk)
-        if not(instance.status == 1 and request.user.interviewer.status == 1 and request.user.interviewer.statusDesc == instance.pk):
+        if not (
+                    instance.status == 1 and request.user.interviewer.status == 1 and request.user.interviewer.statusDesc == instance.pk):
             return HttpResponseRedirect('/admin/')
         instance.status = 2
         instance.save()
@@ -76,12 +81,14 @@ class InterviewAdminViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mi
         request.user.interviewer.save()
         return HttpResponseRedirect('../interview')
 
-    @detail_route(renderer_classes=[BrowsableAPIInterviewerRenderer], methods=['GET', 'PUT'], serializer_class=InterviewMainSerializer)
+    @detail_route(renderer_classes=[BrowsableAPIInterviewerRenderer], methods=['GET', 'PUT'],
+                  serializer_class=InterviewMainSerializer)
     def interview(self, request, pk):
         # bisa masuk sini kalo interview register, interviewer status == 2
         instance = InterviewRegister.objects.get(pk=pk)
 
-        if not(instance.status == 2 and request.user.interviewer.status == 2 and instance.pk == request.user.interviewer.statusDesc):
+        if not (
+                    instance.status == 2 and request.user.interviewer.status == 2 and instance.pk == request.user.interviewer.statusDesc):
             return HttpResponseRedirect('../../')
 
         if request.method == 'GET':
@@ -95,7 +102,7 @@ class InterviewAdminViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mi
                 request.user.interviewer.status = 0
                 instance.save()
                 request.user.interviewer.save()
-            return
+            return HttpResponseRedirect('../../')
 
     @detail_route()
     def cancel(self, request, pk):
@@ -105,6 +112,23 @@ class InterviewAdminViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mi
             instance.save()
             request.user.interviewer.status = 0
             request.user.interviewer.save()
+
+        return HttpResponseRedirect('../../')
+
+    @detail_route()
+    def absent(self, request, pk):
+        if request.user.interviewer.status == 1 or request.user.interviewer.status == 2:
+            instance = InterviewRegister.objects.get(pk=request.user.interviewer.statusDesc)
+            instance.status = 0
+            instance.queueNumber = instance.department.queueLast + 1
+            instance.department.queueLast += 1
+            instance.department.save()
+            instance.interviewee.countAccepted = instance.interviewee.hitung()
+            instance.interviewee.save()
+            instance.save()
+            request.user.interviewer.status = 0
+            request.user.interviewer.save()
+
         return HttpResponseRedirect('../../')
 
     def list(self, request, *args, **kwargs):
@@ -119,14 +143,14 @@ class InterviewAdminViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mi
             serializer = self.get_serializer(queryset, many=True)
             return Response(serializer.data)
         elif request.user.interviewer.status == 1 or request.user.interviewer.status == 2:
-            return HttpResponseRedirect('./'+str(request.user.interviewer.statusDesc))
+            return HttpResponseRedirect('./' + str(request.user.interviewer.statusDesc))
 
     def retrieve(self, request, *args, **kwargs):
-        #bisa masuk sini kalo (0,0) , (1,1), (2,2)
+        # can get in here if (0,0) , (1,1), (2,2)
         if request.user.interviewer.status == 0:
             instance = InterviewRegister.objects.get(pk=kwargs['pk'])
-            #ini buat interviewer lain yg nyerobot org punya
-            if not(instance.status == 0 or instance.status == 3):
+            # ini buat interviewer lain yg nyerobot org punya/ This created another interviewer who has people nyero boat
+            if not (instance.status == 0 or instance.status == 3):
                 return HttpResponseRedirect('/admin/')
             request.user.interviewer.status = 1
             request.user.interviewer.statusDesc = kwargs['pk']
@@ -136,23 +160,25 @@ class InterviewAdminViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mi
             return self.call(request, kwargs['pk'])
         else:
             if kwargs['pk'] != str(request.user.interviewer.statusDesc):
-                return HttpResponseRedirect('/admin/'+str(request.user.interviewer.statusDesc))
+                return HttpResponseRedirect('/admin/' + str(request.user.interviewer.statusDesc))
 
             if request.user.interviewer.status == 1:
                 return self.call(request, kwargs['pk'])
             elif request.user.interviewer.status == 2:
-                return HttpResponseRedirect('/admin/'+kwargs['pk']+'/interview')
+                return HttpResponseRedirect('/admin/' + kwargs['pk'] + '/interview')
             else:
                 return Response({'detail': 'bug!!, please report how you can come up here!!!'})
 
 
-class InterviewAdminJudgeViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin, viewsets.GenericViewSet):
+class InterviewAdminJudgeViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin,
+                                 viewsets.GenericViewSet):
     serializer_class = InterviewJudgeSerializer
-    renderer_classes = [AdminJudgeRenderer,]
+    renderer_classes = [AdminJudgeRenderer, ]
     permission_classes = (IsInterviewer,)
 
     def get_queryset(self):
-        return InterviewRegister.objects.filter(status=3, department=self.request.user.interviewer.department).order_by('score')
+        return InterviewRegister.objects.filter(status=3, department=self.request.user.interviewer.department).order_by(
+            'score')
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
@@ -205,7 +231,8 @@ class InterviewAdminJudgeViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixi
         return HttpResponseRedirect('../../')
 
 
-class InterviewRegisterViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.DestroyModelMixin, mixins.CreateModelMixin, viewsets.GenericViewSet):
+class InterviewRegisterViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.DestroyModelMixin,
+                               mixins.CreateModelMixin, viewsets.GenericViewSet):
     "Queue registration"
     serializer_class = InterviewRegistrationSerializer
     renderer_classes = [BrowsableAPIRendererInterviewRegister]
@@ -230,13 +257,17 @@ class InterviewRegisterViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin,
             return HttpResponseRedirect('../../')
 
 
-class IntervieweeViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin, viewsets.GenericViewSet):
+class IntervieweeViewSet(mixins.ListModelMixin, mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin,
+                         viewsets.GenericViewSet):
     """
     User Page
     """
     queryset = Interviewee.objects.all()
     serializer_class = IntervieweeRegistrationSerializer
-    renderer_classes = [BrowsableAPIRendererIntervieweeRegister,]
+    renderer_classes = [BrowsableAPIRendererIntervieweeRegister, ]
+
+    def list(self, request, *args, **kwargs):
+        return Response(IntervieweeRegistrationSerializer.data)
 
     def get_permissions(self):
         if self.request.method == 'POST':
@@ -262,7 +293,7 @@ class IntervieweeViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mix
     def retrieve(self, request, *args, **kwargs):
         try:
             if kwargs['pk'] != str(request.user.interviewee.pk):
-                return HttpResponseRedirect('../'+str(request.user.interviewee.pk))
+                return HttpResponseRedirect('../' + str(request.user.interviewee.pk))
         except:
             return HttpResponseRedirect('../../')
 
@@ -275,6 +306,7 @@ class IntervieweeViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mix
         if serializer.is_valid(raise_exception=True):
             self.perform_create(serializer)
             headers = self.get_success_headers(serializer.data)
+
             return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
         else:
             return Response(serializer.data, status=status.HTTP_406_NOT_ACCEPTABLE)

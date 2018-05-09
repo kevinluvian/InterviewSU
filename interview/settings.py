@@ -25,7 +25,7 @@ SECRET_KEY = '-5ueh@0d=ijfqa@z=*-1eq6l%65gx3h7hb8z3=e$p+j=pf^d@x'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -88,14 +88,14 @@ DATABASES = {
         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
 }
-
+AUTHENTICATION_BACKENDS = ('interview.auth.CaseInsensitiveModelBackend',)
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.8/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Singapore'
 
 USE_I18N = True
 

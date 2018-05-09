@@ -1,7 +1,8 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from .models import Interviewee, InterviewRegister, InterviewDepartment, InterviewGroup
-
+from django.core.validators import EmailValidator
+from django.core.exceptions import ValidationError
 
 class InterviewGroupSerializer(serializers.ModelSerializer):
     url = serializers.CharField(source='name')
@@ -39,8 +40,11 @@ class InterviewRegistrationSerializer(serializers.ModelSerializer):
         try:
             q.interviewee.interviewRegister.get(department=value)
         except InterviewRegister.DoesNotExist:
-            if len(q.interviewee.interviewRegister.filter(department__group=dept.group, status = 0)) == 1:
-                raise serializers.ValidationError('only 1 queue is allowed at a time')
+            #TODO need to limit number of Queue?
+            # if len(q.interviewee.interviewRegister.filter(department__group=dept.group, status = 0)) == 1:
+            #     raise serializers.ValidationError('only 1 queue is allowed at a time')
+            if dept.group.maxRegister == 0:
+                raise serializers.ValidationError("Sorry, queue registration reopens at 8th September 5pm.")
             if len(q.interviewee.interviewRegister.filter(department__group=dept.group)) < dept.group.maxRegister:
                 return value
             else:
@@ -86,8 +90,10 @@ class InterviewMainSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = InterviewRegister
-        fields = ('id', 'queue', 'status', 'customAnswer', 'comment', 'score')
-
+        fields = ('id','queue',
+                  #'status',
+                  'customAnswer', 'comment', 'score')
+        #exclude = ( 'queue', 'status',)
 
 class InterviewCallSerializer(serializers.ModelSerializer):
     queue_number = serializers.CharField(source='queueNumber')
@@ -161,27 +167,42 @@ class InterviewAdminSerializer(serializers.ModelSerializer):
 
 
 class IntervieweeRegistrationSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(source='user.username')
-    password = serializers.CharField(source='user.password', write_only=True, allow_blank=True, style={'placeholder': 'Password1', 'input_type': 'password'},)
+    email = serializers.CharField(source='user.username',style={'placeholder': 'BERTIL.ANDERSSON@NTU.EDU.SG'.lower()})
+    password = serializers.CharField(source='user.password', write_only=True, allow_blank=True, style={'placeholder': 'Passw0rd', 'input_type': 'password'},)
+    name = serializers.CharField(style={'placeholder': 'Bertil Andersson'})
+    matricNumber = serializers.CharField(style={'placeholder': 'U1234567A'})
+    year = serializers.IntegerField(style={'placeholder': 4})
+    major = serializers.CharField(style={'placeholder': 'Chemistry'})
+    phone = serializers.CharField(style={'placeholder': '65148331'})
 
     class Meta:
         model = Interviewee
-        fields = ('id', 'username', 'password', 'name', 'matricNumber', 'year', 'major', 'phone')
+        fields = ('id', 'email', 'password', 'name', 'matricNumber', 'year', 'major', 'phone')
 
     def is_valid(self, raise_exception=False):
+        self.initial_data['email'] = self.initial_data['email'].lower()
         error = super(IntervieweeRegistrationSerializer, self).is_valid(raise_exception = raise_exception)
+
         try:
-            User.objects.get(username=self.initial_data['username'])
-            if not ('username' in self._errors):
-                self._errors['username'] = ['This email is already registered']
-            return False
+            EmailValidator()(self.initial_data['email'])
+        except ValidationError:
+            self._errors['email'] = ["Please enter a valid Email"]
+            error = False
+        try:
+            User.objects.get(username=self.initial_data['email'])
+            if not ('email' in self._errors):
+                self._errors['email'] = ['This email is already registered']
+            error = False
         except:
-            try:
-                Interviewee.objects.get(matricNumber=self.initial_data['matricNumber'])
-                if not ('matricNumber' in self._errors):
-                    self._errors['matricNumber'] = ['This matric number is already registered']
-            except:
-                return error
+            pass
+
+        try:
+            Interviewee.objects.get(matricNumber=self.initial_data['matricNumber'])
+            if not ('matricNumber' in self._errors):
+                self._errors['matricNumber'] = ['This matric number is already registered']
+        except:
+            return error
+
         return False
 
     def update(self, instance, validated_data):
